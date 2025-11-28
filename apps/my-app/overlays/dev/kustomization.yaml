@@ -1,0 +1,11 @@
+# apps/my-app/overlays/dev/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# すべてのリソースをこの Namespace に配置
+namespace: my-app-dev
+
+# 使用するリソース
+resources:
+  - ../../base  # base の定義を参照
+  - namespace.yaml  # Namespace 自体も作成

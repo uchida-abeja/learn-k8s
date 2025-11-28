@@ -1,0 +1,9 @@
+# apps/my-app/base/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# base で管理するリソース一覧
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml

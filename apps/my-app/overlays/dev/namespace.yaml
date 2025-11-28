@@ -1,0 +1,8 @@
+# apps/my-app/overlays/dev/namespace.yaml
+apiVersion: v1
+kind: Namespace  # リソースを論理的にグループ化する単位
+metadata:
+  name: my-app-dev  # dev 環境用の Namespace 名
+  labels:
+    app.kubernetes.io/part-of: my-app  # このアプリケーションに属する
+    env: dev  # 環境ラベル

@@ -1,0 +1,27 @@
+# General Kubernetes/Helm files to ignore in Git
+*.kubeconfig
+*.pem
+*.crt
+__pycache__
+*.pyc
+
+# Helm dependency directories
+# The 'charts' folder is typically generated when running 'helm dependency update'
+# and should generally not be version controlled, but managed by the dependency file.
+charts/
+*/charts/
+
+# Helm lock files (optional, depends on workflow)
+# requirements.lock (Helm v2) or Chart.lock (Helm v3)
+requirements.lock
+Chart.lock
+
+# Operating System and IDE Files
+.DS_Store
+.vscode/
+.project
+.classpath
+.settings/
+.idea/
+out/
+build/

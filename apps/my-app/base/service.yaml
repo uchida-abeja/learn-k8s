@@ -1,0 +1,19 @@
+# apps/my-app/base/service.yaml
+apiVersion: v1
+kind: Service  # Pod へのアクセスを提供するリソース
+metadata:
+  name: my-app-nginx  # Service の名前（Ingress から参照される）
+  labels:
+    app.kubernetes.io/name: my-app
+    app.kubernetes.io/component: web
+spec:
+  type: ClusterIP  # クラスタ内部からのみアクセス可能
+  selector:  # どの Pod にトラフィックを流すか（Deployment の labels と一致）
+    app.kubernetes.io/name: my-app
+    app.kubernetes.io/component: web
+  ports:
+    - port: 80  # Service が受け付けるポート
+      targetPort: 80  # Pod（コンテナ）のポート
+      protocol: TCP
+      name: http
+

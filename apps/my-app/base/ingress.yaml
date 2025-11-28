@@ -1,0 +1,20 @@
+# apps/my-app/base/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress  # 外部からのHTTPアクセスをルーティングするリソース
+metadata:
+  name: my-app-nginx  # Ingress の名前
+  labels:
+    app.kubernetes.io/name: my-app
+    app.kubernetes.io/component: web
+spec:
+  ingressClassName: traefik  # Rancher Desktop のデフォルト Ingress Controller
+  rules:  # ルーティングルール
+    - http:  # host を指定しない = すべてのホストで有効
+        paths:
+          - path: /  # パス（/ = ルート）
+            pathType: Prefix  # 前方一致
+            backend:  # 転送先の Service
+              service:
+                name: my-app-nginx  # Service 名
+                port:
+                  number: 80  # Service のポート

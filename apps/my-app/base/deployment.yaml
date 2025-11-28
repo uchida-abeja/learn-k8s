@@ -1,0 +1,25 @@
+# apps/my-app/base/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment  # Pod を管理するリソース（常駐プロセス用）
+metadata:
+  name: my-app-nginx  # Deployment の名前
+  labels:
+    app.kubernetes.io/name: my-app  # アプリケーション名
+    app.kubernetes.io/component: web  # コンポーネントの役割
+spec:
+  replicas: 1  # Pod の数（dev環境なので1個）
+  selector:  # どの Pod を管理するか（template の labels と一致させる）
+    matchLabels:
+      app.kubernetes.io/name: my-app
+      app.kubernetes.io/component: web
+  template:  # Pod のテンプレート
+    metadata:
+      labels:  # Pod に付けるラベル（selector と一致させる）
+        app.kubernetes.io/name: my-app
+        app.kubernetes.io/component: web
+    spec:
+      containers:
+        - name: nginx  # コンテナ名
+          image: nginx:1.27  # 使用する Docker イメージ
+          ports:
+            - containerPort: 80  # コンテナが公開するポート
