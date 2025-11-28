@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: minio-event-sync
+  labels:
+    app: minio-event-sync
+spec:
+  # 5分ごとにイベント設定を確認・同期
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 300
+      template:
+        metadata:
+          labels:
+            app: minio-event-sync
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: minio-sa
+          containers:
+          - name: sync-events
+            image: quay.io/minio/mc:RELEASE.2024-11-21T17-21-54Z
+            command:
+            - /bin/sh
+            - -c
+            - |
+              # MinIO接続設定
+              mc alias set myminio http://minio:9000 admin password
+              
+              # 現在のイベント設定を確認
+              EVENT_LIST=$(mc event list myminio/raw-data 2>/dev/null)
+              
+              if [ -z "$EVENT_LIST" ]; then
+                echo "Event notification not found. Adding..."
+                mc event add myminio/raw-data arn:minio:sqs::PRIMARY:webhook --event put --suffix .mcap
+                echo "Event notification added successfully"
+              else
+                echo "Event notification already configured:"
+                echo "$EVENT_LIST"
+              fi
+            env:
+            - name: MC_HOST_myminio
+              value: "http://admin:password@minio:9000"
+            resources:
+              requests:
+                memory: 32Mi
+                cpu: 25m
+              limits:
+                memory: 64Mi
+                cpu: 50m

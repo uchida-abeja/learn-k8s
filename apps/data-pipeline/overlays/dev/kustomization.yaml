@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - namespace.yaml
+
+namespace: data-pipeline-dev
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/instance: data-pipeline-dev
+      env: dev
+
+images:
+  - name: minio/minio
+    newTag: RELEASE.2023-11-20T22-40-07Z

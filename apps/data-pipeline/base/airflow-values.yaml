@@ -1,0 +1,63 @@
+dags:
+  persistence:
+    enabled: false
+  gitSync:
+    enabled: false
+
+scheduler:
+  extraVolumes:
+    - name: dags-volume
+      configMap:
+        name: airflow-dags
+  extraVolumeMounts:
+    - name: dags-volume
+      mountPath: /opt/airflow/dags/pipeline.py
+      subPath: pipeline.py
+
+workers:
+  extraVolumes:
+    - name: dags-volume
+      configMap:
+        name: airflow-dags
+  extraVolumeMounts:
+    - name: dags-volume
+      mountPath: /opt/airflow/dags/pipeline.py
+      subPath: pipeline.py
+
+webserver:
+  extraVolumes:
+    - name: dags-volume
+      configMap:
+        name: airflow-dags
+  extraVolumeMounts:
+    - name: dags-volume
+      mountPath: /opt/airflow/dags/pipeline.py
+      subPath: pipeline.py
+  defaultUser:
+    enabled: true
+    username: admin
+    password: admin
+
+# Executor設定
+executor: CeleryExecutor
+
+# Redis設定 - Celery Executorに必要
+redis:
+  enabled: true
+
+data:
+  metadataConnection:
+    host: airflow-postgresql
+
+# REST API認証設定 - Basic認証を有効化
+config:
+  api:
+    auth_backends: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+  core:
+    # 新規DAGをデフォルトでunpause状態にする
+    dags_are_paused_at_creation: "False"
+
+postgresql:
+  image:
+    repository: postgres
+    tag: "13"

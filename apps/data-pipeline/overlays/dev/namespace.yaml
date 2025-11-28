@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-pipeline-dev
+  labels:
+    env: dev
+    app.kubernetes.io/part-of: data-pipeline-system

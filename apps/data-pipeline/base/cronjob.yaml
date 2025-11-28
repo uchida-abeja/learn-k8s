@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rosbag-generator
+  labels:
+    app.kubernetes.io/name: rosbag-generator
+    app.kubernetes.io/component: ingestion
+    app.kubernetes.io/part-of: data-pipeline-system
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: generator
+              image: python:3.11-slim
+              command: 
+                - /bin/sh
+                - -c
+                - |
+                  pip install --no-cache-dir boto3
+                  python /app/generator.py
+              envFrom:
+                - configMapRef:
+                    name: pipeline-config
+              volumeMounts:
+                - name: scripts
+                  mountPath: /app
+          volumes:
+            - name: scripts
+              configMap:
+                name: pipeline-scripts
+                defaultMode: 0555

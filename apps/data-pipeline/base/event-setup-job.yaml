@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-event-setup
+  labels:
+    app: minio-event-setup
+  annotations:
+    # Generate unique name on each apply to re-run the job
+    kustomize.config.k8s.io/behavior: create
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: minio-event-setup
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: minio-sa
+      containers:
+      - name: setup-events
+        image: quay.io/minio/mc:RELEASE.2024-11-21T17-21-54Z
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo "Waiting for MinIO to be ready..."
+          sleep 20
+          
+          echo "Configuring MinIO client..."
+          mc alias set myminio http://minio:9000 admin password
+          
+          echo "Verifying buckets..."
+          mc ls myminio/raw-data
+          mc ls myminio/processed-data
+          
+          echo "Setting up bucket event notification..."
+          mc event add myminio/raw-data arn:minio:sqs::PRIMARY:webhook --event put --suffix .mcap || echo "Event already exists"
+          
+          echo "Verifying event notification..."
+          mc event list myminio/raw-data
+          
+          echo "Setup completed successfully!"
+        env:
+        - name: MC_HOST_myminio
+          value: "http://admin:password@minio:9000"
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 50m
+          limits:
+            memory: 128Mi
+            cpu: 100m
