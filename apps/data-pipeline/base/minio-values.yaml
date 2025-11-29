@@ -49,9 +49,6 @@ buckets:
     policy: none
     purge: false
 
-# イベント通知設定は別途event-setup-job.yamlで管理
-# Helm Chart 5.xにはmakeJobScript機能がないため、独立したKubernetes Jobとして実装
-
 # イメージ設定（公式MinIOイメージ）
 image:
   repository: quay.io/minio/minio
