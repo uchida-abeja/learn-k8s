@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: simple-go-app
-          image: ghcr.io/uchida-abeja/simple-go-app:latest
+          image: simple-go-app-image
           ports:
             - containerPort: 8080
               name: http
