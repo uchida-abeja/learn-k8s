@@ -56,8 +56,11 @@ buckets:
     purge: false
 
 # ArgoCD経由のデプロイではHelm hooksを無効化
+# helm.sh/hookアノテーションをダミー値で上書き
 postJob:
-  annotations: {}  # helm.sh/hook annotationを削除
+  annotations:
+    "helm.sh/hook": "null"
+    "helm.sh/hook-delete-policy": "null"
 
 # イメージ設定（公式MinIOイメージ）
 image:
