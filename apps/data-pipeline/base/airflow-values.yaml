@@ -51,6 +51,15 @@ executor: CeleryExecutor
 redis:
   enabled: true
 
+# ArgoCD経由のデプロイではHelm hooksを無効化
+migrateDatabaseJob:
+  enabled: true
+  useHelmHooks: false
+
+createUserJob:
+  enabled: true
+  useHelmHooks: false
+
 data:
   metadataConnection:
     host: airflow-postgresql

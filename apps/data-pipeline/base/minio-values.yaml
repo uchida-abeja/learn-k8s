@@ -55,6 +55,10 @@ buckets:
     policy: none
     purge: false
 
+# ArgoCD経由のデプロイではHelm hooksを無効化
+postJob:
+  annotations: {}  # helm.sh/hook annotationを削除
+
 # イメージ設定（公式MinIOイメージ）
 image:
   repository: quay.io/minio/minio
