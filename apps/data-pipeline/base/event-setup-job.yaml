@@ -46,12 +46,12 @@ spec:
           valueFrom:
             secretKeyRef:
               name: minio-credentials
-              key: root-user
+              key: rootUser
         - name: MINIO_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
               name: minio-credentials
-              key: root-password
+              key: rootPassword
         - name: MC_HOST_myminio
           value: "http://$(MINIO_ROOT_USER):$(MINIO_ROOT_PASSWORD)@minio:9000"
         resources:
