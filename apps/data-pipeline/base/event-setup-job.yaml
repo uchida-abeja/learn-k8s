@@ -30,6 +30,10 @@ spec:
           echo "Configuring MinIO client..."
           mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}
           
+          echo "Creating buckets if not exist..."
+          mc mb myminio/raw-data --ignore-existing
+          mc mb myminio/processed-data --ignore-existing
+          
           echo "Verifying buckets..."
           mc ls myminio/raw-data
           mc ls myminio/processed-data
