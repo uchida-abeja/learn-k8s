@@ -1,0 +1,10 @@
+# ArgoCD Config Management Plugin for Kustomize + Helm
+# 
+# 注意: ArgoCD v2.4+では、Config Management PluginはSidecar形式で設定する必要があります
+# このファイルは参考用です。実際の設定は以下のいずれかの方法で行います:
+#
+# 方法1: argocd-repo-server DeploymentにSidecar Containerを追加
+# 方法2: Kustomizeビルドオプションを使用（推奨）
+#
+# 現在のdata-pipeline-application.yamlでは、pluginの代わりに
+# Kustomizeの標準機能を使用するように変更することを推奨します

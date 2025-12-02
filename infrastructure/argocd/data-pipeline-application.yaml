@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: data-pipeline
+  namespace: argocd
+  # Finalizerを設定してApplicationが削除されたときにリソースも削除
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # プロジェクト名（defaultまたはカスタムプロジェクト）
+  project: default
+  
+  # GitリポジトリとパスでApplicationを定義
+  source:
+    # GitHubリポジトリURL
+    repoURL: https://github.com/uchida-abeja/learn-k8s.git
+    # ブランチ名
+    targetRevision: main
+    # Kustomizeオーバーレイのパス
+    path: apps/data-pipeline/overlays/dev
+    
+    # 注: HelmチャートはKustomizeのhelmChartsフィールドで参照されている必要があります
+    # base/kustomization.yamlでhelmChartsが定義されていることを確認
+      
+  # デプロイ先のKubernetesクラスタ
+  destination:
+    # ローカルクラスタ（ArgoCD自身がデプロイされているクラスタ）
+    server: https://kubernetes.default.svc
+    # 対象namespace（Kustomizeで上書きされる）
+    namespace: data-pipeline-dev
+  
+  # 同期ポリシー
+  syncPolicy:
+    # 自動同期を有効化
+    automated:
+      # Git変更時に自動的にデプロイ
+      prune: true
+      # リソースが削除された場合、クラスタからも削除
+      selfHeal: true
+      # リソースの自動修復
+      allowEmpty: false
+    
+    # 同期オプション
+    syncOptions:
+      # Namespaceが存在しない場合は作成
+      - CreateNamespace=true
+      # リソースの適用順序を保証
+      - ApplyOutOfSyncOnly=true
+      
+    # リトライ設定
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  
+  # リソースの無視ルール（一時的なリソースを除外）
+  ignoreDifferences:
+    # HelmチャートのStatus更新を無視
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
