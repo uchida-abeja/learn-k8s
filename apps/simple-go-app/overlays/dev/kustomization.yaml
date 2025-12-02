@@ -18,3 +18,8 @@ patches:
     target:
       kind: Ingress
       name: simple-go-app
+
+images:
+  - name: simple-go-app-image
+    newName: ghcr.io/uchida-abeja/simple-go-app
+    newTag: ac16f80
