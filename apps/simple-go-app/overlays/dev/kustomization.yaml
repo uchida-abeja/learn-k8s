@@ -1,0 +1,20 @@
+# apps/simple-go-app/overlays/dev/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: simple-go-app-dev
+
+resources:
+  - ../../base
+  - namespace.yaml
+  - secret.yaml
+
+# dev環境固有のパッチ（必要に応じて）
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: simple-go-app.local
+    target:
+      kind: Ingress
+      name: simple-go-app

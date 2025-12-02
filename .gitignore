@@ -25,3 +25,5 @@ Chart.lock
 .idea/
 out/
 build/
+
+blog/

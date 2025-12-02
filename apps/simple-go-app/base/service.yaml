@@ -1,0 +1,18 @@
+# apps/simple-go-app/base/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-go-app
+  labels:
+    app.kubernetes.io/name: simple-go-app
+    app.kubernetes.io/component: backend
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: simple-go-app
+    app.kubernetes.io/component: backend
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http

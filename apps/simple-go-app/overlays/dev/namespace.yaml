@@ -1,0 +1,8 @@
+# apps/simple-go-app/overlays/dev/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: simple-go-app-dev
+  labels:
+    app.kubernetes.io/part-of: simple-go-app
+    env: dev
