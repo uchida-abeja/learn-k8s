@@ -5,6 +5,13 @@
 __pycache__
 *.pyc
 
+# Plain-text Secrets (NOT Sealed Secrets)
+# Allow *-sealed-secret.yaml but block plain secret.yaml files
+*-secret.yaml
+!*-sealed-secret.yaml
+secret.yaml
+secrets.yaml
+
 # Helm dependency directories
 # The 'charts' folder is typically generated when running 'helm dependency update'
 # and should generally not be version controlled, but managed by the dependency file.

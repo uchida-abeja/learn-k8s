@@ -36,7 +36,13 @@ webserver:
   defaultUser:
     enabled: true
     username: admin
-    password: admin
+    # パスワードはSealed Secretで管理（実際の値は暗号化されています）
+    # 本番環境では infrastructure/sealed-secrets/data-pipeline-airflow-sealed-secret.yaml を更新
+    password: admin  # このvalueは使用されず、Secretから上書きされます
+
+# Webserver Secret Key（セッション暗号化用）
+# Sealed Secretで管理される webserver-secret-key を使用
+webserverSecretKey: dummy-key-will-be-overwritten-by-secret
 
 # Executor設定
 executor: CeleryExecutor

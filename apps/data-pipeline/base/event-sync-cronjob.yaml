@@ -27,7 +27,7 @@ spec:
             - -c
             - |
               # MinIO接続設定
-              mc alias set myminio http://minio:9000 admin password
+              mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}
               
               # 現在のイベント設定を確認
               EVENT_LIST=$(mc event list myminio/raw-data 2>/dev/null)
@@ -41,8 +41,18 @@ spec:
                 echo "$EVENT_LIST"
               fi
             env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root-user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root-password
             - name: MC_HOST_myminio
-              value: "http://admin:password@minio:9000"
+              value: "http://$(MINIO_ROOT_USER):$(MINIO_ROOT_PASSWORD)@minio:9000"
             resources:
               requests:
                 memory: 32Mi

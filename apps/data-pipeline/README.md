@@ -99,10 +99,25 @@ apps/data-pipeline/
 
 ## デプロイ
 
+### 前提条件: Sealed Secrets Controllerのインストール
+
+機密情報（パスワード等）はSealed Secretsで管理されています。初回のみControllerをインストールしてください：
+
+```bash
+# Sealed Secrets Controllerをインストール
+kubectl apply -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.27.2/controller.yaml
+
+# Controllerの起動を確認
+kubectl get pods -n kube-system -l name=sealed-secrets-controller
+```
+
+詳細は [infrastructure/sealed-secrets/README.md](../../infrastructure/sealed-secrets/README.md) を参照してください。
+
 ### 開発環境へのデプロイ
 
 ```bash
 # data-pipeline-dev namespaceにデプロイ
+# Sealed Secretsも自動的に適用されます
 kubectl kustomize apps/data-pipeline/overlays/dev --enable-helm --load-restrictor LoadRestrictionsNone | kubectl apply -f -
 ```
 

@@ -8,8 +8,14 @@ mode: standalone
 replicas: 1
 
 # 認証情報
+# 注: これらの値はSealed Secretで管理されています（infrastructure/sealed-secrets/）
+# Helmチャートの制限により、ここに値を記載する必要がありますが、
+# 実際の認証はminio-credentials Secretが使用されます
 rootUser: admin
 rootPassword: password
+
+# 既存のSecretを使用（Sealed Secretから生成）
+existingSecret: minio-credentials
 
 # 環境変数（Webhook Notification設定を永続化）
 environment:

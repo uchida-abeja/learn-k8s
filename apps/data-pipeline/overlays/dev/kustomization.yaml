@@ -4,6 +4,8 @@ kind: Kustomization
 resources:
   - ../../base
   - namespace.yaml
+  - data-pipeline-minio-sealed-secret.yaml
+  - data-pipeline-airflow-sealed-secret.yaml
 
 namespace: data-pipeline-dev
 

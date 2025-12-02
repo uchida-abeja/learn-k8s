@@ -19,7 +19,7 @@ spec:
                 # MinIOの起動を待つ
                 sleep 30
                 
-                # mc設定とイベント通知設定
-                mc alias set myminio http://localhost:9000 admin password
+                # mc設定とイベント通知設定（環境変数から認証情報を取得）
+                mc alias set myminio http://localhost:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}
                 mc event add myminio/raw-data arn:minio:sqs::PRIMARY:webhook --event put --suffix .mcap 2>/dev/null || true
                 echo "Event notification configured"

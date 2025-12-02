@@ -33,11 +33,17 @@ apps/simple-go-app/
 
 - Kubernetes クラスタが稼働していること
 - `kubectl` がインストールされていること
+- **Sealed Secrets Controller** がインストールされていること
+  ```bash
+  kubectl apply -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.27.2/controller.yaml
+  ```
 - MinIO が `data-pipeline-dev` namespace にデプロイされていること
   ```bash
   # Helmチャートを含むためkustomize buildの結果をパイプで適用
   kubectl kustomize apps/data-pipeline/overlays/dev --enable-helm --load-restrictor LoadRestrictionsNone | kubectl apply -f -
   ```
+
+> **注**: 認証情報は Sealed Secrets で管理されています。詳細は [infrastructure/sealed-secrets/README.md](../../infrastructure/sealed-secrets/README.md) を参照してください。
 
 ## デプロイ方法
 

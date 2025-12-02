@@ -35,9 +35,15 @@ spec:
         - name: AIRFLOW_API_URL
           value: "http://airflow-webserver:8080"
         - name: AIRFLOW_USER
-          value: "admin"
+          valueFrom:
+            secretKeyRef:
+              name: airflow-credentials
+              key: admin-username
         - name: AIRFLOW_PASSWORD
-          value: "admin"
+          valueFrom:
+            secretKeyRef:
+              name: airflow-credentials
+              key: admin-password
         livenessProbe:
           httpGet:
             path: /health

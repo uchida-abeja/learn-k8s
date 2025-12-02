@@ -7,7 +7,7 @@ namespace: simple-go-app-dev
 resources:
   - ../../base
   - namespace.yaml
-  - secret.yaml
+  - simple-go-app-sealed-secret.yaml
 
 # dev環境固有のパッチ（必要に応じて）
 patches:

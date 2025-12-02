@@ -28,7 +28,7 @@ spec:
           sleep 20
           
           echo "Configuring MinIO client..."
-          mc alias set myminio http://minio:9000 admin password
+          mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}
           
           echo "Verifying buckets..."
           mc ls myminio/raw-data
@@ -42,8 +42,18 @@ spec:
           
           echo "Setup completed successfully!"
         env:
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio-credentials
+              key: root-user
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio-credentials
+              key: root-password
         - name: MC_HOST_myminio
-          value: "http://admin:password@minio:9000"
+          value: "http://$(MINIO_ROOT_USER):$(MINIO_ROOT_PASSWORD)@minio:9000"
         resources:
           requests:
             memory: 64Mi
