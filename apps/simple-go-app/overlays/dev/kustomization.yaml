@@ -5,21 +5,20 @@ kind: Kustomization
 namespace: simple-go-app-dev
 
 resources:
-  - ../../base
-  - namespace.yaml
-  - simple-go-app-sealed-secret.yaml
+- ../../base
+- namespace.yaml
 
 # dev環境固有のパッチ（必要に応じて）
 patches:
-  - patch: |-
-      - op: replace
-        path: /spec/rules/0/host
-        value: simple-go-app.local
-    target:
-      kind: Ingress
-      name: simple-go-app
+- patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: simple-go-app.local
+  target:
+    kind: Ingress
+    name: simple-go-app
 
 images:
-  - name: simple-go-app-image
-    newName: ghcr.io/uchida-abeja/simple-go-app
-    newTag: ac16f80
+- name: simple-go-app-image
+  newName: ghcr.io/uchida-abeja/simple-go-app
+  newTag: ac16f80

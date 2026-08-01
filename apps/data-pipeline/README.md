@@ -70,11 +70,7 @@ apps/data-pipeline/
 │   ├── cronjob.yaml                 # Generator CronJob
 │   ├── ingress.yaml                 # Ingress設定
 │   ├── event-setup-job.yaml         # MinIOイベント通知設定Job
-│   ├── event-sync-cronjob.yaml      # イベント通知同期CronJob
-│   ├── minio-lifecycle-patch.yaml   # MinIO Lifecycle設定パッチ
-│   └── charts/
-│       ├── airflow-1.15.0/          # Airflow Helm Chart
-│       └── minio-5.4.0/             # MinIO Helm Chart
+│   └── event-sync-cronjob.yaml      # イベント通知同期CronJob
 ├── overlays/
 │   └── dev/
 │       ├── kustomization.yaml       # 開発環境用設定
@@ -94,8 +90,8 @@ apps/data-pipeline/
 
 - Kubernetes クラスタ（Rancher Desktop等）
 - kubectl
-- kustomize v5.0+
-- Helm 3.x（kustomize --enable-helmで自動使用）
+- Kustomize 5.8.1
+- Helm 3.19.4（Argo CD 3.4.5のrepo-serverと揃える）
 
 ## デプロイ
 
@@ -105,13 +101,13 @@ apps/data-pipeline/
 
 ```bash
 # Sealed Secrets Controllerをインストール
-kubectl apply -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.27.2/controller.yaml
+kubectl apply -f https://github.com/bitnami/sealed-secrets/releases/download/v0.38.4/controller.yaml
 
 # Controllerの起動を確認
 kubectl get pods -n kube-system -l name=sealed-secrets-controller
 ```
 
-詳細は [infrastructure/sealed-secrets/README.md](../../infrastructure/sealed-secrets/README.md) を参照してください。
+Controllerの起動後、リポジトリルートの`scripts/generate-dev-sealed-secrets.sh`で、このクラスタ専用の暗号文を生成してください。upstreamには別クラスタ用の暗号文や平文Secretを含めていません。
 
 ### 開発環境へのデプロイ
 
@@ -145,8 +141,10 @@ kubectl port-forward -n data-pipeline-dev svc/minio-console 9001:9001
 127.0.0.1 minio.local
 ```
 
-- Airflow UI: http://airflow.local (admin/admin)
-- MinIO Console: http://minio.local (admin/password)
+- Airflow UI: http://airflow.local
+- MinIO Console: http://minio.local
+
+ログイン情報は生成した`SealedSecret`から作られるSecretを使用します。READMEやコマンド履歴へ値を書かないでください。
 
 ## 動作確認
 
@@ -207,16 +205,13 @@ kubectl logs -n data-pipeline-dev airflow-worker-0 -c worker -f
 - Basic認証: 有効 (API呼び出し用)
 - DAG自動Unpause: 有効 (`dags_are_paused_at_creation: False`)
 
-**認証情報**:
-- Username: `admin`
-- Password: `admin`
+**認証情報**: `airflow-credentials` Secretからcreate-user JobとWebhookへ渡します。
 
 ### MinIO設定
 
 **主要設定** (`minio-values.yaml`):
 - Mode: `standalone`
-- Root User: `admin`
-- Root Password: `password`
+- 認証情報: `minio-credentials` Secret
 - Webhook通知: 有効
 
 **バケット**:
@@ -300,16 +295,14 @@ kubectl delete namespace data-pipeline-dev
 
 ## 環境変数
 
-主要な環境変数は`config.env`で管理されています:
+機密でない主要な環境変数は`config.env`、認証情報はKubernetes Secretで管理します。
 
 | 変数名 | デフォルト値 | 説明 |
 |--------|-------------|------|
 | `MINIO_ENDPOINT` | `http://minio:9000` | MinIO APIエンドポイント |
-| `MINIO_ACCESS_KEY` | `admin` | MinIOアクセスキー |
-| `MINIO_SECRET_KEY` | `password` | MinIOシークレットキー |
 | `AIRFLOW_BASE_URL` | `http://airflow-webserver:8080` | Airflow WebサーバーURL |
-| `AIRFLOW_USER` | `admin` | Airflow認証ユーザー名 |
-| `AIRFLOW_PASSWORD` | `admin` | Airflow認証パスワード |
+
+`MINIO_ACCESS_KEY`、`MINIO_SECRET_KEY`、`AIRFLOW_USER`、`AIRFLOW_PASSWORD`は、Pod定義の`secretKeyRef`から注入します。
 
 ## 開発ガイドライン
 

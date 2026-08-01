@@ -23,8 +23,8 @@ app = Flask(__name__)
 
 # 環境変数から設定を取得
 AIRFLOW_API = os.getenv('AIRFLOW_API_URL', 'http://airflow-webserver:8080')
-AIRFLOW_USER = os.getenv('AIRFLOW_USER', 'admin')
-AIRFLOW_PASSWORD = os.getenv('AIRFLOW_PASSWORD', 'admin')
+AIRFLOW_USER = os.environ['AIRFLOW_USER']
+AIRFLOW_PASSWORD = os.environ['AIRFLOW_PASSWORD']
 DAG_ID = 'rosbag_processor_poc'
 
 @app.route('/minio-event', methods=['POST'])

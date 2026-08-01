@@ -25,6 +25,17 @@ spec:
               envFrom:
                 - configMapRef:
                     name: pipeline-config
+              env:
+                - name: MINIO_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: minio-credentials
+                      key: rootUser
+                - name: MINIO_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: minio-credentials
+                      key: rootPassword
               volumeMounts:
                 - name: scripts
                   mountPath: /app

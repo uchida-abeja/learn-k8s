@@ -4,9 +4,8 @@ metadata:
   name: argocd-server
   namespace: argocd
   annotations:
-    # ArgoCD ServerをHTTPモード（insecure）で動作させる
-    # または、バックエンドプロトコルをHTTPSに設定
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/service.serversscheme: https
 spec:
   ingressClassName: traefik
   rules:
@@ -19,4 +18,4 @@ spec:
               service:
                 name: argocd-server
                 port:
-                  number: 80
+                  number: 443

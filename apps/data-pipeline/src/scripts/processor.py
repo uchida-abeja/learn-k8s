@@ -6,8 +6,8 @@ from io import StringIO
 
 # 環境変数
 MINIO_ENDPOINT = os.getenv('MINIO_ENDPOINT', 'http://minio:9000')
-ACCESS_KEY = os.getenv('MINIO_ACCESS_KEY', 'admin')
-SECRET_KEY = os.getenv('MINIO_SECRET_KEY', 'password')
+ACCESS_KEY = os.environ['MINIO_ACCESS_KEY']
+SECRET_KEY = os.environ['MINIO_SECRET_KEY']
 SOURCE_BUCKET = 'raw-data'
 DEST_BUCKET = 'processed-data'
 

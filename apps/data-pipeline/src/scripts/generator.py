@@ -6,8 +6,8 @@ import random
 
 # 環境変数から設定を取得 (K8sのConfigMap/Secretから注入)
 MINIO_ENDPOINT = os.getenv('MINIO_ENDPOINT', 'http://minio:9000')
-ACCESS_KEY = os.getenv('MINIO_ACCESS_KEY', 'minioadmin')
-SECRET_KEY = os.getenv('MINIO_SECRET_KEY', 'minioadmin')
+ACCESS_KEY = os.environ['MINIO_ACCESS_KEY']
+SECRET_KEY = os.environ['MINIO_SECRET_KEY']
 BUCKET_NAME = 'raw-data'
 
 def get_s3_client():

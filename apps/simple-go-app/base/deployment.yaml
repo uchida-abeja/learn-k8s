@@ -18,6 +18,9 @@ spec:
         app.kubernetes.io/name: simple-go-app
         app.kubernetes.io/component: backend
     spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-pull-credentials
       containers:
         - name: simple-go-app
           image: simple-go-app-image
@@ -52,13 +55,13 @@ spec:
               cpu: "200m"
           livenessProbe:
             httpGet:
-              path: /buckets
+              path: /healthz
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /buckets
+              path: /healthz
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 5

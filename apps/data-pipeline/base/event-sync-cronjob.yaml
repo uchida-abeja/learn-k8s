@@ -26,19 +26,23 @@ spec:
             - /bin/sh
             - -c
             - |
+              set -eu
+
               # MinIO接続設定
-              mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}
-              
+              mc alias set myminio http://minio:9000 \
+                "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"
+
               # 現在のイベント設定を確認
-              EVENT_LIST=$(mc event list myminio/raw-data 2>/dev/null)
-              
-              if [ -z "$EVENT_LIST" ]; then
+              if ! mc event list myminio/raw-data \
+                | grep -Fq 'arn:minio:sqs::PRIMARY:webhook'; then
                 echo "Event notification not found. Adding..."
-                mc event add myminio/raw-data arn:minio:sqs::PRIMARY:webhook --event put --suffix .mcap
+                mc event add myminio/raw-data \
+                  arn:minio:sqs::PRIMARY:webhook \
+                  --event put \
+                  --suffix .mcap
                 echo "Event notification added successfully"
               else
-                echo "Event notification already configured:"
-                echo "$EVENT_LIST"
+                echo "Event notification already configured."
               fi
             env:
             - name: MINIO_ROOT_USER
@@ -51,8 +55,6 @@ spec:
                 secretKeyRef:
                   name: minio-credentials
                   key: rootPassword
-            - name: MC_HOST_myminio
-              value: "http://$(MINIO_ROOT_USER):$(MINIO_ROOT_PASSWORD)@minio:9000"
             resources:
               requests:
                 memory: 32Mi

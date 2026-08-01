@@ -35,14 +35,10 @@ webserver:
       subPath: pipeline.py
   defaultUser:
     enabled: true
-    username: admin
-    # パスワードはSealed Secretで管理（実際の値は暗号化されています）
-    # 本番環境では infrastructure/sealed-secrets/data-pipeline-airflow-sealed-secret.yaml を更新
-    password: admin  # このvalueは使用されず、Secretから上書きされます
 
-# Webserver Secret Key（セッション暗号化用）
-# Sealed Secretで管理される webserver-secret-key を使用
-webserverSecretKey: dummy-key-will-be-overwritten-by-secret
+# レンダリングごとのランダム生成を避け、SealedSecretから作られる固定Secretを使う。
+fernetKeySecretName: airflow-runtime-secrets
+webserverSecretKeySecretName: airflow-runtime-secrets
 
 # Executor設定
 executor: CeleryExecutor
@@ -50,16 +46,50 @@ executor: CeleryExecutor
 # Redis設定 - Celery Executorに必要
 redis:
   enabled: true
+  passwordSecretName: airflow-runtime-secrets
 
 # ArgoCD経由のデプロイではHelm hooksを無効化
 migrateDatabaseJob:
   enabled: true
   useHelmHooks: false
+  applyCustomEnv: false
+  jobAnnotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 
 createUserJob:
   useHelmHooks: false
+  applyCustomEnv: false
+  jobAnnotations:
+    argocd.argoproj.io/sync-options: Replace=true
+  # 通常のGit管理リソースとして残すため、完了後の自動削除を無効にする。
+  ttlSecondsAfterFinished: null
+  command:
+    - bash
+    - -c
+  args:
+    - |-
+      exec airflow users create \
+        --role Admin \
+        --username "${AIRFLOW_ADMIN_USERNAME}" \
+        --email admin@example.com \
+        --firstname admin \
+        --lastname user \
+        --password "${AIRFLOW_ADMIN_PASSWORD}"
+  env:
+    - name: AIRFLOW_ADMIN_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: airflow-credentials
+          key: admin-username
+    - name: AIRFLOW_ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: airflow-credentials
+          key: admin-password
 
 data:
+  brokerUrlSecretName: airflow-runtime-secrets
   metadataConnection:
     host: airflow-postgresql
 

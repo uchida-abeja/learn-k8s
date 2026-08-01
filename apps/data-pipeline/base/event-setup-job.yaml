@@ -5,10 +5,9 @@ metadata:
   labels:
     app: minio-event-setup
   annotations:
-    # Generate unique name on each apply to re-run the job
-    kustomize.config.k8s.io/behavior: create
+    # JobのPod templateはimmutableなので、定義変更時だけ安全に作り直す。
+    argocd.argoproj.io/sync-options: Replace=true
 spec:
-  ttlSecondsAfterFinished: 600
   template:
     metadata:
       labels:
@@ -23,27 +22,41 @@ spec:
         - /bin/sh
         - -c
         - |
-          set -e
+          set -eu
           echo "Waiting for MinIO to be ready..."
-          sleep 20
-          
-          echo "Configuring MinIO client..."
-          mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}
-          
+          attempt=1
+          until mc alias set myminio http://minio:9000 \
+            "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}" \
+            && mc ready myminio
+          do
+            if [ "${attempt}" -ge 60 ]; then
+              echo "MinIO did not become ready after 60 attempts." >&2
+              exit 1
+            fi
+            attempt=$((attempt + 1))
+            sleep 2
+          done
+
           echo "Creating buckets if not exist..."
           mc mb myminio/raw-data --ignore-existing
           mc mb myminio/processed-data --ignore-existing
-          
+
           echo "Verifying buckets..."
           mc ls myminio/raw-data
           mc ls myminio/processed-data
-          
+
           echo "Setting up bucket event notification..."
-          mc event add myminio/raw-data arn:minio:sqs::PRIMARY:webhook --event put --suffix .mcap || echo "Event already exists"
-          
+          if ! mc event list myminio/raw-data \
+            | grep -Fq 'arn:minio:sqs::PRIMARY:webhook'; then
+            mc event add myminio/raw-data \
+              arn:minio:sqs::PRIMARY:webhook \
+              --event put \
+              --suffix .mcap
+          fi
+
           echo "Verifying event notification..."
           mc event list myminio/raw-data
-          
+
           echo "Setup completed successfully!"
         env:
         - name: MINIO_ROOT_USER
@@ -56,8 +69,6 @@ spec:
             secretKeyRef:
               name: minio-credentials
               key: rootPassword
-        - name: MC_HOST_myminio
-          value: "http://$(MINIO_ROOT_USER):$(MINIO_ROOT_PASSWORD)@minio:9000"
         resources:
           requests:
             memory: 64Mi
