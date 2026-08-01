@@ -52,11 +52,30 @@ with DAG(
             )
         ],
         
-        env_vars={
-            'MINIO_ENDPOINT': 'http://minio:9000',
-            'MINIO_ACCESS_KEY': 'admin',
-            'MINIO_SECRET_KEY': 'password',
-        },
+        env_vars=[
+            k8s.V1EnvVar(
+                name='MINIO_ENDPOINT',
+                value='http://minio:9000',
+            ),
+            k8s.V1EnvVar(
+                name='MINIO_ACCESS_KEY',
+                value_from=k8s.V1EnvVarSource(
+                    secret_key_ref=k8s.V1SecretKeySelector(
+                        name='minio-credentials',
+                        key='rootUser',
+                    )
+                ),
+            ),
+            k8s.V1EnvVar(
+                name='MINIO_SECRET_KEY',
+                value_from=k8s.V1EnvVarSource(
+                    secret_key_ref=k8s.V1SecretKeySelector(
+                        name='minio-credentials',
+                        key='rootPassword',
+                    )
+                ),
+            ),
+        ],
         
         is_delete_operator_pod=True,
         get_logs=True,

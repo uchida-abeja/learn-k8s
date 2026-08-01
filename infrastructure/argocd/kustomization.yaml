@@ -6,8 +6,3 @@ namespace: argocd
 resources:
   - data-pipeline-application.yaml
   - simple-go-app-application.yaml
-  - ingress.yaml
-
-# Config Management Pluginは手動で適用する必要があります
-# kubectl apply -f argocd-cm-plugin.yaml
-# kubectl rollout restart deployment argocd-repo-server -n argocd

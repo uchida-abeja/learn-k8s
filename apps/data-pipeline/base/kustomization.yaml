@@ -8,12 +8,6 @@ resources:
   - event-setup-job.yaml
   - event-sync-cronjob.yaml
 
-patches:
-  - path: minio-lifecycle-patch.yaml
-    target:
-      kind: Deployment
-      name: minio
-
 configMapGenerator:
   - name: pipeline-config
     envs:
@@ -42,12 +36,9 @@ helmCharts:
     repo: https://airflow.apache.org
     version: 1.15.0
     releaseName: airflow
-    namespace: default
     valuesFile: airflow-values.yaml
-  
   - name: minio
     repo: https://charts.min.io/
     version: 5.4.0
     releaseName: minio
-    namespace: default
     valuesFile: minio-values.yaml

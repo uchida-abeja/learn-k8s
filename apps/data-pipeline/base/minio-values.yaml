@@ -7,15 +7,11 @@ mode: standalone
 # レプリカ数
 replicas: 1
 
-# 認証情報
-# 注: これらの値はSealed Secretで管理されています（infrastructure/sealed-secrets/）
-# Helmチャートの制限により、ここに値を記載する必要がありますが、
-# 実際の認証はminio-credentials Secretが使用されます
-rootUser: admin
-rootPassword: password
-
 # 既存のSecretを使用（Sealed Secretから生成）
 existingSecret: minio-credentials
+
+# Chart 5.4.0のデフォルトユーザー（console / console123）を作成しない。
+users: []
 
 # 環境変数（Webhook Notification設定を永続化）
 environment:
@@ -46,21 +42,8 @@ consoleService:
   type: ClusterIP
   port: 9001
 
-# デフォルトバケットの作成
-buckets:
-  - name: raw-data
-    policy: none
-    purge: false
-  - name: processed-data
-    policy: none
-    purge: false
-
-# ArgoCD経由のデプロイではHelm hooksを無効化
-# helm.sh/hookアノテーションをダミー値で上書き
-postJob:
-  annotations:
-    "helm.sh/hook": "null"
-    "helm.sh/hook-delete-policy": "null"
+# バケットとイベント通知は、Helm hookではなくevent-setup-job.yamlで作成する。
+# これにより、Airflow側のArgo CD hookとHelm hookを混在させない。
 
 # イメージ設定（公式MinIOイメージ）
 image:

@@ -1,0 +1,47 @@
+name: Open Deployment Pull Request
+
+on:
+  push:
+    branches:
+      - "deploy/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: deployment-pr-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  open-pull-request:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Open pull request if needed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          OPEN_PR_COUNT="$(
+            gh pr list \
+              --head "${DEPLOY_BRANCH}" \
+              --state open \
+              --json number \
+              --jq length
+          )"
+
+          if [ "${OPEN_PR_COUNT}" -ne 0 ]; then
+            echo "The existing deployment pull request was updated."
+            exit 0
+          fi
+
+          gh pr create \
+            --base main \
+            --head "${DEPLOY_BRANCH}" \
+            --title "Deploy latest simple-go-app build" \
+            --body "Updates the dev overlay to the latest successful build."
