@@ -4,9 +4,6 @@ metadata:
   name: minio-event-setup
   labels:
     app: minio-event-setup
-  annotations:
-    # JobのPod templateはimmutableなので、定義変更時だけ安全に作り直す。
-    argocd.argoproj.io/sync-options: Replace=true
 spec:
   template:
     metadata:
