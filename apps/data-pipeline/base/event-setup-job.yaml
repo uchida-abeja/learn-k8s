@@ -44,9 +44,9 @@ spec:
 
           echo "Setting up bucket event notification..."
           if ! mc event list myminio/raw-data \
-            | grep -Fq 'arn:minio:sqs::PRIMARY:webhook'; then
+            | grep -Fq 'arn:minio:sqs::primary:webhook'; then
             mc event add myminio/raw-data \
-              arn:minio:sqs::PRIMARY:webhook \
+              arn:minio:sqs::primary:webhook \
               --event put \
               --suffix .mcap
           fi
