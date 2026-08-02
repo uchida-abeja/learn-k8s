@@ -60,8 +60,6 @@ migrateDatabaseJob:
 createUserJob:
   useHelmHooks: false
   applyCustomEnv: false
-  jobAnnotations:
-    argocd.argoproj.io/sync-options: Replace=true
   # 通常のGit管理リソースとして残すため、完了後の自動削除を無効にする。
   ttlSecondsAfterFinished: null
   command:
@@ -90,6 +88,8 @@ createUserJob:
 
 data:
   brokerUrlSecretName: airflow-runtime-secrets
+  # AirflowとPostgreSQLが同じSealedSecret由来の資格情報を参照する。
+  metadataSecretName: airflow-metadata
   metadataConnection:
     host: airflow-postgresql
 
@@ -102,6 +102,8 @@ config:
     dags_are_paused_at_creation: "False"
 
 postgresql:
+  auth:
+    existingSecret: airflow-metadata
   image:
     repository: postgres
     tag: "13"

@@ -99,22 +99,81 @@ apps/data-pipeline/
 
 機密情報（パスワード等）はSealed Secretsで管理されています。初回のみControllerをインストールしてください：
 
-```bash
-# Sealed Secrets Controllerをインストール
-kubectl apply -f https://github.com/bitnami/sealed-secrets/releases/download/v0.38.4/controller.yaml
+以下では検証用contextを`kind-argocd-blog`へ固定します。別の検証クラスタを使う場合は、確認済みのcontext名へ明示的に置き換えてください。
 
-# Controllerの起動を確認
-kubectl get pods -n kube-system -l name=sealed-secrets-controller
+```bash
+(
+  set -euo pipefail
+
+  EXPECTED_CONTEXT=kind-argocd-blog
+  test "$(kubectl config current-context)" = "${EXPECTED_CONTEXT}"
+
+  # Sealed Secrets Controllerをインストール
+  kubectl --context "${EXPECTED_CONTEXT}" apply \
+    -f https://github.com/bitnami/sealed-secrets/releases/download/v0.38.4/controller.yaml
+
+  # Controllerの起動を確認
+  kubectl --context "${EXPECTED_CONTEXT}" get pods \
+    -n kube-system \
+    -l name=sealed-secrets-controller
+)
 ```
 
-Controllerの起動後、リポジトリルートの`scripts/generate-dev-sealed-secrets.sh`で、このクラスタ専用の暗号文を生成してください。upstreamには別クラスタ用の暗号文や平文Secretを含めていません。
+Controllerの起動後、リポジトリルートの`scripts/generate-dev-sealed-secrets.sh`で、このクラスタ専用の`SealedSecret`を生成してください。リポジトリ全体で5つ、そのうちdata-pipeline用は4つです。Airflowのmetadata database接続文字列とPostgreSQLパスワードは、同じ`airflow-metadata`へ暗号化されます。upstreamには別クラスタ用の暗号文や平文Secretを含めていません。
+
+このスクリプトは新しい空の検証クラスタを初期化する用途です。既存PVCがある環境で資格情報を上書きすると、PostgreSQL内部のパスワードやFernet keyと食い違うため実行しないでください。既存環境の資格情報移行はこのサンプルの範囲外です。
 
 ### 開発環境へのデプロイ
 
 ```bash
-# data-pipeline-dev namespaceにデプロイ
-# Sealed Secretsも自動的に適用されます
-kubectl kustomize apps/data-pipeline/overlays/dev --enable-helm --load-restrictor LoadRestrictionsNone | kubectl apply -f -
+(
+  set -euo pipefail
+
+  EXPECTED_CONTEXT=kind-argocd-blog
+  test "$(kubectl config current-context)" = "${EXPECTED_CONTEXT}"
+
+  # data-pipeline-dev namespaceにデプロイ
+  # Sealed Secretsも自動的に適用されます
+  kustomize build apps/data-pipeline/overlays/dev \
+    --enable-helm \
+    --load-restrictor LoadRestrictionsNone \
+    | kubectl --context "${EXPECTED_CONTEXT}" apply \
+        -n data-pipeline-dev \
+        -f -
+)
+```
+
+Argo CD経由では`Application`の`destination.namespace`がnamespace未指定リソースを補完します。上記のようにレンダリング結果を直接applyするときは、`-n data-pipeline-dev`を必ず指定してください。また、`kubectl`内蔵版ではなく、Argo CD 3.4.5と同じKustomize 5.8.1／Helm 3.19.4をPATH上で使ってください。通常は直接applyせず、Argo CDの`Application`から同期します。
+
+### Job定義を変更したとき
+
+Kubernetes JobのPod templateはimmutableです。通常リソースとして残す`airflow-create-user`と`minio-event-setup`には、Argo CDの`Replace=true`や`Force=true`による自動的な作り直しを設定していません。
+
+`airflow-run-airflow-migrations`は別扱いです。このJobはArgo CDのSync hookと`BeforeHookCreation,HookSucceeded`で管理され、同期時にArgo CDが作り直します。通常Jobの手動削除手順には含めません。
+
+`minio-event-setup`は再実行できるように作られているため、定義を変更した場合だけ、このJobを手動削除してArgo CDのself-healを待ちます。一方、`airflow-create-user`の`airflow users create`は既存ユーザーがいる状態での再実行を前提としていません。既存ユーザーを考慮した移行手順を用意できるまで、手動削除・再同期しないでください。
+
+```bash
+# 例: minio-event-setupの定義を変更した場合
+(
+  set -euo pipefail
+
+  EXPECTED_CONTEXT=kind-argocd-blog
+  test "$(kubectl config current-context)" = "${EXPECTED_CONTEXT}"
+  kubectl --context "${EXPECTED_CONTEXT}" delete job \
+    minio-event-setup \
+    -n data-pipeline-dev
+
+  # automated self-healによる再作成を待つ
+  kubectl --context "${EXPECTED_CONTEXT}" wait --for=create \
+    job/minio-event-setup \
+    -n data-pipeline-dev \
+    --timeout=300s
+  kubectl --context "${EXPECTED_CONTEXT}" wait --for=condition=complete \
+    job/minio-event-setup \
+    -n data-pipeline-dev \
+    --timeout=300s
+)
 ```
 
 ### リソースの確認
@@ -205,7 +264,7 @@ kubectl logs -n data-pipeline-dev airflow-worker-0 -c worker -f
 - Basic認証: 有効 (API呼び出し用)
 - DAG自動Unpause: 有効 (`dags_are_paused_at_creation: False`)
 
-**認証情報**: `airflow-credentials` Secretからcreate-user JobとWebhookへ渡します。
+**認証情報**: 管理ユーザーは`airflow-credentials`、Fernet key・Webserver key・Redis接続は`airflow-runtime-secrets`、metadata database接続・PostgreSQLパスワードは`airflow-metadata`から参照します。いずれも生成スクリプトで作る`SealedSecret`から復号されます。
 
 ### MinIO設定
 
@@ -277,8 +336,21 @@ kubectl logs -n data-pipeline-dev airflow-worker-0 -c worker -f
 
 1. イベント設定を再適用:
    ```bash
-   kubectl delete job minio-event-setup -n data-pipeline-dev
-   kubectl kustomize apps/data-pipeline/overlays/dev --enable-helm --load-restrictor LoadRestrictionsNone | kubectl apply -f -
+   (
+     set -euo pipefail
+
+     EXPECTED_CONTEXT=kind-argocd-blog
+     test "$(kubectl config current-context)" = "${EXPECTED_CONTEXT}"
+     kubectl --context "${EXPECTED_CONTEXT}" delete job \
+       minio-event-setup \
+       -n data-pipeline-dev
+     kustomize build apps/data-pipeline/overlays/dev \
+       --enable-helm \
+       --load-restrictor LoadRestrictionsNone \
+       | kubectl --context "${EXPECTED_CONTEXT}" apply \
+           -n data-pipeline-dev \
+           -f -
+   )
    ```
 
 2. MinIOのログを確認:
@@ -289,8 +361,16 @@ kubectl logs -n data-pipeline-dev airflow-worker-0 -c worker -f
 ## クリーンアップ
 
 ```bash
-# Namespace全体を削除
-kubectl delete namespace data-pipeline-dev
+(
+  set -euo pipefail
+
+  EXPECTED_CONTEXT=kind-argocd-blog
+  test "$(kubectl config current-context)" = "${EXPECTED_CONTEXT}"
+
+  # Namespace全体を削除するため、この検証専用Namespaceであることを再確認する
+  kubectl --context "${EXPECTED_CONTEXT}" delete namespace \
+    data-pipeline-dev
+)
 ```
 
 ## 環境変数
