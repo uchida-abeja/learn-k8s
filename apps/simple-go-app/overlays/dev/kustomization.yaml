@@ -21,4 +21,4 @@ patches:
 images:
 - name: simple-go-app-image
   newName: ghcr.io/uchida-abeja/simple-go-app
-  newTag: ac16f80
+  newTag: a5117d5f454fb335d66350e5d5f115be79ed2ec2
